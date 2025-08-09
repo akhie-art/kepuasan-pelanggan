@@ -39,7 +39,7 @@ if menu == "Manual":
         4: "Gubug"
     }
     country_reverse_map = {v: k for k, v in country_map.items()}
-    country_label = st.selectbox("Negara", options=list(country_map.values()))
+    country_label = st.selectbox("Kecamatan", options=list(country_map.values()))
     country_value = country_reverse_map[country_label]
 
     income = st.number_input("Pendapatan", min_value=0, value=50000)
@@ -120,3 +120,4 @@ elif menu == "Upload File (CSV/XLSX)":
                     file_name="hasil_prediksi.csv",
                     mime="text/csv"
                 )
+
