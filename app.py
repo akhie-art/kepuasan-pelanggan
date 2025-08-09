@@ -49,14 +49,14 @@ if menu == "Manual":
     service_quality = st.slider("Kualitas Layanan (0 = Buruk, 10 = Baik)", 0, 10, 5)
     purchase_frequency = st.slider("Frekuensi Pembelian (0 = Jarang, 10 = Sering)", 0, 10, 5)
 
-    feedback_map = {0: "Tinggi", 1: "Rendah", 2: "Sedang"}
+    feedback_map = {0: "Baik", 1: "Buruk", 2: "Sedang"}
     feedback_reverse_map = {v: k for k, v in feedback_map.items()}
-    feedback_label = st.selectbox("Feedback Score", options=list(feedback_map.values()))
+    feedback_label = st.selectbox("Penilaian", options=list(feedback_map.values()))
     feedback_value = feedback_reverse_map[feedback_label]
 
     loyalty_map = {0: "Perunggu", 1: "Emas", 2: "Perak"}
     loyalty_reverse_map = {v: k for k, v in loyalty_map.items()}
-    loyalty_label = st.selectbox("Loyalty Level", options=list(loyalty_map.values()))
+    loyalty_label = st.selectbox("Tingkat Kesetiaan", options=list(loyalty_map.values()))
     loyalty_value = loyalty_reverse_map[loyalty_label]
 
     # Buat input data sesuai dengan nilai numerik encoding
@@ -120,4 +120,5 @@ elif menu == "Upload File (CSV/XLSX)":
                     file_name="hasil_prediksi.csv",
                     mime="text/csv"
                 )
+
 
