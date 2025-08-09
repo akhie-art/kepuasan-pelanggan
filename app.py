@@ -25,25 +25,51 @@ menu = st.selectbox("Pilih Mode Prediksi", ["Manual", "Upload File (CSV/XLSX)"])
 
 if menu == "Manual":
     age = st.number_input("Usia", min_value=18, max_value=100, value=30)
-    gender = st.selectbox("Jenis Kelamin", encoders["gender"].classes_)
-    country = st.selectbox("Negara", encoders["country"].classes_)
-    income = st.number_input("Pendapatan", min_value=0, value=50000)
-    product_quality = st.slider("Kualitas Produk", 0, 10, 5)
-    service_quality = st.slider("Kualitas Layanan", 0, 10, 5)
-    purchase_frequency = st.slider("Frekuensi Pembelian", 0, 10, 5)
-    feedback_score = st.selectbox("Feedback Score", encoders["feedback"].classes_)
-    loyalty_level = st.selectbox("Loyalty Level", encoders["loyalty"].classes_)
+    
+    gender_map = {1: "Laki - Laki", 2: "Perempuan"}
+    gender_reverse_map = {v: k for k, v in gender_map.items()}
+    gender_label = st.selectbox("Jenis Kelamin", options=list(gender_map.values()))
+    gender_value = gender_reverse_map[gender_label]
 
+    country_map = {
+        0: "Purwodadi",
+        1: "Pulokulon",
+        2: "Ngaringan",
+        3: "Godong",
+        4: "Gubug"
+    }
+    country_reverse_map = {v: k for k, v in country_map.items()}
+    country_label = st.selectbox("Negara", options=list(country_map.values()))
+    country_value = country_reverse_map[country_label]
+
+    income = st.number_input("Pendapatan", min_value=0, value=50000)
+
+    # Slider label dengan 0-10, misal 0=buruk, 10=baik
+    product_quality = st.slider("Kualitas Produk (0 = Buruk, 10 = Baik)", 0, 10, 5)
+    service_quality = st.slider("Kualitas Layanan (0 = Buruk, 10 = Baik)", 0, 10, 5)
+    purchase_frequency = st.slider("Frekuensi Pembelian (0 = Jarang, 10 = Sering)", 0, 10, 5)
+
+    feedback_map = {0: "Tinggi", 1: "Rendah", 2: "Sedang"}
+    feedback_reverse_map = {v: k for k, v in feedback_map.items()}
+    feedback_label = st.selectbox("Feedback Score", options=list(feedback_map.values()))
+    feedback_value = feedback_reverse_map[feedback_label]
+
+    loyalty_map = {0: "Perunggu", 1: "Emas", 2: "Perak"}
+    loyalty_reverse_map = {v: k for k, v in loyalty_map.items()}
+    loyalty_label = st.selectbox("Loyalty Level", options=list(loyalty_map.values()))
+    loyalty_value = loyalty_reverse_map[loyalty_label]
+
+    # Buat input data sesuai dengan nilai numerik encoding
     input_data = np.array([[  
         age,
-        encoders["gender"].transform([gender])[0],
-        encoders["country"].transform([country])[0],
+        gender_value,
+        country_value,
         income,
         product_quality,
         service_quality,
         purchase_frequency,
-        encoders["feedback"].transform([feedback_score])[0],
-        encoders["loyalty"].transform([loyalty_level])[0]
+        feedback_value,
+        loyalty_value
     ]])
 
     input_data_scaled = scaler.transform(input_data)
@@ -58,7 +84,6 @@ if menu == "Manual":
 elif menu == "Upload File (CSV/XLSX)":
     uploaded_file = st.file_uploader("Upload file CSV atau XLSX", type=["csv", "xlsx"])
     if uploaded_file is not None:
-        # Baca file sesuai ekstensi
         if uploaded_file.name.endswith(".csv"):
             data = pd.read_csv(uploaded_file)
         else:
@@ -67,7 +92,6 @@ elif menu == "Upload File (CSV/XLSX)":
         st.write("Data yang diupload:")
         st.dataframe(data.head())
 
-        # Pastikan kolom ada
         required_cols = ["Age", "Gender", "Country", "Income", "ProductQuality", 
                          "ServiceQuality", "PurchaseFrequency", "FeedbackScore", "LoyaltyLevel"]
         missing_cols = [col for col in required_cols if col not in data.columns]
@@ -89,11 +113,10 @@ elif menu == "Upload File (CSV/XLSX)":
                 st.write("Hasil Prediksi:")
                 st.dataframe(data)
 
-                # Opsi download hasil prediksi
                 csv = data.to_csv(index=False).encode('utf-8')
                 st.download_button(
                     label="Download hasil prediksi (CSV)",
                     data=csv,
                     file_name="hasil_prediksi.csv",
                     mime="text/csv"
-                ) 
+                )
