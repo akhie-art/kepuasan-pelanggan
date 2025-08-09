@@ -25,25 +25,51 @@ menu = st.selectbox("Pilih Mode Prediksi", ["Manual", "Upload File (CSV/XLSX)"])
 
 if menu == "Manual":
     age = st.number_input("Usia", min_value=18, max_value=100, value=30)
-    gender = st.selectbox("Jenis Kelamin", encoders["gender"].classes_)
-    country = st.selectbox("Negara", encoders["country"].classes_)
+
+    # Gender dengan pilihan angka dan label
+    gender_map = {i: label for i, label in enumerate(encoders["gender"].classes_)}
+    gender_option = st.selectbox(
+        "Jenis Kelamin",
+        options=list(gender_map.keys()),
+        format_func=lambda x: f"{x} = {gender_map[x]}"
+    )
+
+    country_map = {i: label for i, label in enumerate(encoders["country"].classes_)}
+    country_option = st.selectbox(
+        "Negara",
+        options=list(country_map.keys()),
+        format_func=lambda x: f"{x} = {country_map[x]}"
+    )
+
     income = st.number_input("Pendapatan", min_value=0, value=50000)
     product_quality = st.slider("Kualitas Produk", 0, 10, 5)
     service_quality = st.slider("Kualitas Layanan", 0, 10, 5)
     purchase_frequency = st.slider("Frekuensi Pembelian", 0, 10, 5)
-    feedback_score = st.selectbox("Feedback Score", encoders["feedback"].classes_)
-    loyalty_level = st.selectbox("Loyalty Level", encoders["loyalty"].classes_)
 
-    input_data = np.array([[  
+    feedback_map = {i: label for i, label in enumerate(encoders["feedback"].classes_)}
+    feedback_option = st.selectbox(
+        "Feedback Score",
+        options=list(feedback_map.keys()),
+        format_func=lambda x: f"{x} = {feedback_map[x]}"
+    )
+
+    loyalty_map = {i: label for i, label in enumerate(encoders["loyalty"].classes_)}
+    loyalty_option = st.selectbox(
+        "Loyalty Level",
+        options=list(loyalty_map.keys()),
+        format_func=lambda x: f"{x} = {loyalty_map[x]}"
+    )
+
+    input_data = np.array([[
         age,
-        encoders["gender"].transform([gender])[0],
-        encoders["country"].transform([country])[0],
+        gender_option,
+        country_option,
         income,
         product_quality,
         service_quality,
         purchase_frequency,
-        encoders["feedback"].transform([feedback_score])[0],
-        encoders["loyalty"].transform([loyalty_level])[0]
+        feedback_option,
+        loyalty_option
     ]])
 
     input_data_scaled = scaler.transform(input_data)
@@ -67,33 +93,43 @@ elif menu == "Upload File (CSV/XLSX)":
         st.write("Data yang diupload:")
         st.dataframe(data.head())
 
-        # Pastikan kolom ada
-        required_cols = ["Age", "Gender", "Country", "Income", "ProductQuality", 
+        # Kolom wajib
+        required_cols = ["Age", "Gender", "Country", "Income", "ProductQuality",
                          "ServiceQuality", "PurchaseFrequency", "FeedbackScore", "LoyaltyLevel"]
         missing_cols = [col for col in required_cols if col not in data.columns]
         if missing_cols:
             st.error(f"File harus memiliki kolom berikut: {missing_cols}")
         else:
-            # Encoding kolom kategorikal
-            data["Gender"] = encoders["gender"].transform(data["Gender"])
-            data["Country"] = encoders["country"].transform(data["Country"])
-            data["FeedbackScore"] = encoders["feedback"].transform(data["FeedbackScore"])
-            data["LoyaltyLevel"] = encoders["loyalty"].transform(data["LoyaltyLevel"])
+            try:
+                # Encoding kolom kategorikal dengan handling error bila ada label baru
+                data["Gender"] = data["Gender"].map(
+                    {v: k for k, v in enumerate(encoders["gender"].classes_)})
+                data["Country"] = data["Country"].map(
+                    {v: k for k, v in enumerate(encoders["country"].classes_)})
+                data["FeedbackScore"] = data["FeedbackScore"].map(
+                    {v: k for k, v in enumerate(encoders["feedback"].classes_)})
+                data["LoyaltyLevel"] = data["LoyaltyLevel"].map(
+                    {v: k for k, v in enumerate(encoders["loyalty"].classes_)})
 
-            X = data[required_cols].values
-            X_scaled = scaler.transform(X)
+                # Cek ada nilai NaN setelah mapping? berarti ada label baru yang tidak dikenal
+                if data[["Gender","Country","FeedbackScore","LoyaltyLevel"]].isnull().any().any():
+                    st.error("Terdapat nilai kategori di file yang tidak dikenal oleh model. Pastikan data input sesuai dengan data training.")
+                else:
+                    X = data[required_cols].values
+                    X_scaled = scaler.transform(X)
 
-            if st.button("Prediksi Semua Data"):
-                preds = model.predict(X_scaled)
-                data["Prediksi Kepuasan"] = np.where(preds==1, "PUAS", "TIDAK PUAS")
-                st.write("Hasil Prediksi:")
-                st.dataframe(data)
+                    if st.button("Prediksi Semua Data"):
+                        preds = model.predict(X_scaled)
+                        data["Prediksi Kepuasan"] = np.where(preds == 1, "PUAS", "TIDAK PUAS")
+                        st.write("Hasil Prediksi:")
+                        st.dataframe(data)
 
-                # Opsi download hasil prediksi
-                csv = data.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="Download hasil prediksi (CSV)",
-                    data=csv,
-                    file_name="hasil_prediksi.csv",
-                    mime="text/csv"
-                )
+                        csv = data.to_csv(index=False).encode("utf-8")
+                        st.download_button(
+                            label="Download hasil prediksi (CSV)",
+                            data=csv,
+                            file_name="hasil_prediksi.csv",
+                            mime="text/csv"
+                        )
+            except Exception as e:
+                st.error(f"Terjadi kesalahan saat memproses file: {e}")
