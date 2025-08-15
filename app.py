@@ -3,11 +3,6 @@ import pandas as pd
 import numpy as np
 import pickle
 
-# Load dataset (hanya untuk opsi kategori)
-@st.cache_data
-def load_data():
-    return pd.read_csv("customer_feedback.csv")
-
 # Load model, scaler, encoder
 @st.cache_resource
 def load_model():
@@ -16,7 +11,6 @@ def load_model():
     encoders = pickle.load(open("encoders.pkl", "rb"))
     return model, scaler, encoders
 
-df = load_data()
 model, scaler, encoders = load_model()
 
 st.title("🤖 Prediksi Kepuasan Pelanggan")
@@ -44,7 +38,6 @@ if menu == "Manual":
 
     income = st.number_input("Pendapatan", min_value=0, value=50000)
 
-    # Slider label dengan 0-10, misal 0=buruk, 10=baik
     product_quality = st.slider("Kualitas Produk (0 = Buruk, 10 = Baik)", 0, 10, 5)
     service_quality = st.slider("Kualitas Layanan (0 = Buruk, 10 = Baik)", 0, 10, 5)
     purchase_frequency = st.slider("Frekuensi Pembelian (0 = Jarang, 10 = Sering)", 0, 10, 5)
@@ -59,7 +52,7 @@ if menu == "Manual":
     loyalty_label = st.selectbox("Tingkat Kesetiaan", options=list(loyalty_map.values()))
     loyalty_value = loyalty_reverse_map[loyalty_label]
 
-    # Buat input data sesuai dengan nilai numerik encoding
+    # Buat input data sesuai nilai numerik encoding
     input_data = np.array([[  
         age,
         gender_value,
@@ -120,5 +113,3 @@ elif menu == "Upload File (CSV/XLSX)":
                     file_name="hasil_prediksi.csv",
                     mime="text/csv"
                 )
-
-
